@@ -1,28 +1,48 @@
 import sys
-from os import fork, getpid
+import os
 import time
 
-# print (sys.argv)
-# print (sys.argv[1:])
-print(len(sys.argv))
+def suma_pares():
+		i = 0
+		suma = 0
+		while i <= os.getpid():
+				if i % 2 == 0:
+						suma = suma + i
+				i+=1
+		return suma
 
-elements = sys.argv[1:]
 
-if len(elements) == 4:
-    print (elements)
-    print (sys.argv[1:])
+def childs_function(n_childs):
+		for n in range(int(n_childs)):
+				if os.fork() == 0:
+						print("Hijo procesando... "+str(n))
+						print("hijo: mi pid es: %d, soy hijo de %d" % (os.getpid(), os.getppid()))
+						resultado = suma_pares()
+						print("%d - %d: %d" % (os.getpid(), os.getppid(),resultado))
+						exit(0)
 
-for i in range(len(elements)):
-    # if i == 0:
-    #     print("Function name: %s" % sys.argv[0])
-    # else:
-    if elements[i] == '-n':
-        print ("%d. argument: %s" % (i,elements[i]))
-    elif elements[i] == '-v':
-        print ("%d. verbose: %s" % (i,elements[i]))
-    elif elements[i] == '-h':
-        print ("%d. help: %s" % (i,elements[i]))
-    else:
-        print ("%d. number: %s" % (i,elements[i]))
-        # fork()
-      
+
+def main():
+		elements = sys.argv[1:]
+		if len(elements) == 1:
+				print ("Forma de uso: ")
+				print ("python sumapares.py -n 1")
+				print ("Modo verboso -> python sumapares.py [argumentos]")
+				print ("-n entero indica cantidad de hijos ")
+				print ("-v indica modo verboso")
+				print ("-h ayuda")
+				exit(0)
+		elif len(elements) == 2 or len(elements) == 3:
+				childs_to_create = elements[1]
+				print("padre esperando... soy %d" % os.getpid())
+				childs_function(childs_to_create)
+				pid,estado = os.wait()
+				print("%d - %d" % (os.getpid(), os.getppid()))
+				
+		else:
+				print("Error en la cantidad de argumentos")
+				exit(0)
+
+
+if __name__ == "__main__":
+    main()
