@@ -11,7 +11,9 @@ alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'
 def childs_function(n_childs, number_of_repetitions, file_directory, verbose):
 		fileObject = open(file_directory, "w+")
 		for r in range(int(number_of_repetitions)):
+			time.sleep(1)
 			for n in range(int(n_childs)):
+				time.sleep(1)
 				pid = os.fork()
 				if pid == 0:
 						if verbose:
@@ -23,47 +25,30 @@ def childs_function(n_childs, number_of_repetitions, file_directory, verbose):
 						processes.append(pid)
 
 
-def main():
-		elements = sys.argv[1:]
-		if len(elements) == 1 and elements[0] == "-h":
-				print("Forma de uso: ")
-				print("\tpython sumapares.py -n 1 -v")
-				print("Argumentos:")
-				print("\t-n entero indica cantidad de hijos ")
-				print("\t-v indica modo verboso")
-				print("\t-h ayuda")
-				os._exit(0)
-		elif len(elements) == 6:
-				childs_to_create = elements[1]
-				number_of_repetitions = elements[3]
-				file_directory = elements[5]
-				childs_function(childs_to_create, number_of_repetitions, file_directory)
-				while processes:
-					pid, exit_code = os.wait()
-					if pid != 0:
-							processes.remove(pid)
-				fileObject = open(file_directory, "r")
-				fileContent = fileObject.read()
-				print(fileContent)
-				fileObject.flush()
-		elif len(elements) == 7 and elements[6] == "-v":
-				childs_to_create = elements[1]
-				number_of_repetitions = elements[3]
-				file_directory = elements[5]
-				childs_function(childs_to_create, number_of_repetitions, file_directory, True)
-				while processes:
-					pid, exit_code = os.wait()
-					if pid != 0:
-							processes.remove(pid)
-				fileObject = open(file_directory, "r")
-				fileContent = fileObject.read()
-				print(fileContent)
-				fileObject.flush()		
+def main(args):
+		variables = vars(args)
+		childs_to_create = variables['n']
+		number_of_repetitions = variables['r']
+		file_directory = variables['f']
+		if variables['v']:
+			childs_function(childs_to_create, number_of_repetitions, file_directory, variables['v'])
 		else:
-				print("Error en la cantidad de argumentos o argumentos invalidos.")
-				print("Argumentos validos: \n\t-h (ayuda) \n\t-n 1 (cant. hijos) \n\t-v (verbose)")
-				os._exit(0)
+			childs_function(childs_to_create, number_of_repetitions, file_directory, False)
+		while processes:
+			pid, exit_code = os.wait()
+			if pid != 0:
+					processes.remove(pid)
+		fileObject = open(file_directory, "r")
+		fileContent = fileObject.read()
+		print(fileContent)
+		fileObject.flush()
 
 
 if __name__ == "__main__":
-    main()
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-n", help='entero indica cantidad de hijos')
+	parser.add_argument("-r", help='cantidad de veces que se repite una letra')
+	parser.add_argument("-f", help='path donde se guarda el archivp')
+	parser.add_argument("-v", help='indica modo verboso', action='store_true')
+	args = parser.parse_args()
+	main(args)
