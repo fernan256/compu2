@@ -17,20 +17,26 @@ def rot13(value):
 def escritor(q,pipe_w):
     print("Escritor escribiendo %d" % os.getpid())
     sys.stdin = open(0)
-    print("Ingrese una linea: ")
-    c = sys.stdin.readline()
-    pipe_w.send(c)
-    while q:
+    while True:
         try:
-            print("Lector leyendo: %s" % q.get(True, 1))
-        except:
-            print("Cola vacia... saliendo")
-            break
+            print("Ingrese una linea: ")
+            escrito = sys.stdin.readline()
+            if escrito == "exit":
+                break
+            pipe_w.send(escrito)
+            while q:
+                # try:
+                msg = q.get()
+                print("Escritor leyendo encriptado: %s" % msg)
+                break
+        except IOError:
+            pass
     
 
 
 def lector(q,pipe_r):
     valor = pipe_r.recv()
+    print(f"valor: {valor}")
     if valor:
         encrypted = rot13(valor)
         q.put(encrypted)
