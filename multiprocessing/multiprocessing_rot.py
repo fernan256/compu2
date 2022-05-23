@@ -21,10 +21,10 @@ def show_message(q):
 
 def writer(q,w):
     sys.stdin = open(0)
-    while True:
-        print("Ingrese una linea: ")
-        escrito = sys.stdin.readline()
-        w.send(escrito)
+    print("Ingrese una linea: ")
+    escrito = sys.stdin.readline()
+    w.send(escrito)
+    while q:
         show_message(q)
         break
     
