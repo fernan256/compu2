@@ -20,4 +20,4 @@
 
 ### Diagramas
 
-![Image text](https://github.com/fernan256/compu2/tree/main/final/doc/Diagrama_Trabajo_Final.png)
+![Diagrama_Trabajo_Final](https://github.com/fernan256/compu2/assets/8095849/f11fb354-554f-43c4-a594-f72df3c66bc2)
