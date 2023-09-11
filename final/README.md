@@ -23,8 +23,8 @@
 ### Elementos que se usaran
 
 #### Hilos para multiples conexiones de clientes de manera concurrente.
-#### Mecanismos de IPC como pipes.
-#### Parseo de argumentos par linea de comandos.
+#### Mecanismos de IPC como queues.
+#### Parseo de argumentos para linea de comandos.
 #### Uso de contenedores para la aplicacion como para la base de datos.
 #### Base de datos.
 #### Interfaz de usuario
