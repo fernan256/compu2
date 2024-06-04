@@ -1,17 +1,20 @@
+# Use the official Python image as a base image
 FROM python:3.9-slim
 
-ENV APP_HOME /app
-ENV PYTHONUNBUFFERED 1
+# Set the working directory in the container
+WORKDIR /app
 
-WORKDIR .
+# Copy Pipfile and Pipfile.lock to the working directory
+COPY requirements.txt ./
+COPY src/ .
 
-# COPY requirements.txt .
-# RUN pip install -r requirements.txt
+# Install dependencies using pipenv
+RUN pip install -r requirements.txt
 
-COPY /src .
+# Expose ports 8082 and 9092
+EXPOSE 8082 9092
 
-RUN ls -a
+# Copy the rest of the application code to the working directory
 
-EXPOSE 8080
-
-CMD ["python", "main.py"]
+# Command to run the Python application
+CMD [ "python", "-u", "main.py", "--host", "0.0.0.0", "--http_port", "8082", "--command_line_port", "9092", "--log_file", "output.txt" ]

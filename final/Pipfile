@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+requests = "*"
+mysql-connector-python = "*"
+bs4 = "*"
+flask-sqlalchemy = "*"
+flask = "*"
+gunicorn = "*"
+flask-login = "*"
+python-dotenv = "*"
+pymysql = "*"
+werkzeug = "*"
+flask-wtf = "*"
+email-validator = "*"
+cryptography = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"

@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mysql:8
+    container_name: mysql_container
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - my-network
+
+  python:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    # volumes:
+      # - type: bind
+      #   source: ./src
+      #   target: /app
+    volumes:
+      - ./src:/app
+    depends_on:
+      - db
+    ports:
+      - "8082:8082"
+      - "9092:9092"
+    networks:
+      - my-network
+          
+
+volumes:
+  mysql_data:
+
+networks:
+  my-network:
+    driver: bridge

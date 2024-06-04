@@ -32,3 +32,23 @@
 ### Diagramas
 
 ![Diagrama_Trabajo_Final-Page-2 drawio](https://github.com/fernan256/compu2/assets/8095849/005de424-642a-4ebc-bd94-e130768220c8)
+
+## Como usar el programa
+
+### Componentes
+
+#### Docker
+#### python
+#### virtualenv
+
+### Ejecucion de comandos
+
+#### docker run --name=mysql_container -d mysql/mysql-server:latest
+#### docker run --rm \
+--detach \
+--name=mysql_container \
+--env="MYSQL_ROOT_PASSWORD=\password \
+--publish 3306:3306 \
+--volume=/storage/docker/mysql-data:/var/lib/mysql \
+
+#### python src/main_flask.py --host localhost --http_port 8082 --command_line_port 9092 --log_file src/output.txt
