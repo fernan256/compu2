@@ -1,0 +1,48 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title> Index </title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">					 
+		<style>
+			body {
+				display: flex;
+				margin: 0;
+				padding: 0;
+			}
+
+			.menu {
+				width: 20%;
+				background-color: #f1f1f1;
+				padding: 20px;
+				box-sizing: border-box;
+			}
+
+			.content {
+				flex-grow: 1;
+				padding: 20px;
+				box-sizing: border-box;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="menu">
+			<h2>Menu</h2>
+			<ul>
+				<li><a href="#">Get URL Scraped</a></li>
+				<li><a href="#">Scrap a URL</a></li>
+				<li><a href="{{ url_for('logout') }}">Logout</a></li>
+			</ul>
+		</div>
+		<div class="content">
+			<div align="center" class="border">
+				<div class="header">
+					<h1 class="word">Index</h1>
+				</div>
+				</br></br></br>
+				<h1 class="bottom">
+					Hi {{session.username}}!!</br></br> Welcome to the index page...				 
+				</h1>
+			</div>
+		</div>
+	</body>
+</html>

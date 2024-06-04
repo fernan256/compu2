@@ -1,0 +1,10 @@
+{% extends 'base_template.html' %}
+
+{% block content %}
+    <h2>URLs List</h2>
+    <ul>
+        {% for url in url_data %}
+            <li><a href="{{ url_for('get_urls', url_id=url['id']) }}">{{ url['url'] }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

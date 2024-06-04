@@ -1,1 +1,6 @@
 src/output.txt
+venv
+__pycache__
+.env
+.vs*
+.ip*

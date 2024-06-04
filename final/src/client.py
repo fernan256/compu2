@@ -101,8 +101,9 @@ class Client:
             print(f"Error communicating with the server: {e}")
 
 if __name__ == "__main__":
-    server_address = "127.0.0.1"
-    server_port = 9090
+    # revisar el tema del puerto y address y arreglar el tema de desconxion
+    server_address = "172.21.0.3"
+    server_port = 9092
 
     client = Client(server_address, server_port)
 

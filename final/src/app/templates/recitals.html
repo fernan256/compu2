@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+{% block title %}Buscador{% endblock %}
+
+{% block content %}
+    <h2>Buscar Recitales</h2>
+    <form method="POST" action="{{ url_for('update_recitals') }}">
+        <button type="submit">Update Recitals</button>
+    </form>
+    <!-- Add a search box -->
+    <form action="{{ url_for('search') }}" method="post">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" placeholder="Enter search term">
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Add a table for displaying data -->
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <!-- Add more table headers as needed -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.name }}</td>
+                    <!-- Add more table cells as needed -->
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h2>Lista de Paginas</h2>
+    <ul>
+        {% for url in url_data %}
+            <li><a href="{{ url_for('get_urls', url_id=url['id']) }}">{{ url['url'] }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
