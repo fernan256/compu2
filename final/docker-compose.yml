@@ -10,7 +10,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - my-network
+      - main-network
 
   python:
     build:
@@ -29,12 +29,42 @@ services:
       - "8082:8082"
       - "9092:9092"
     networks:
-      - my-network
+      - main-network
+      - ip6net
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    links:
+      - db:mysql_db
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    networks:
+      - main-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - main-network
           
 
 volumes:
   mysql_data:
 
 networks:
-  my-network:
+  main-network:
     driver: bridge
+  ip6net:
+     enable_ipv6: true
+     ipam:
+       config:
+         - subnet: 2001:0DB8::/112
