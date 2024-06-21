@@ -1,70 +1,100 @@
 import argparse
 from app import flask_app
-
+import time
 import os
 import signal
 import socketserver
-
 import threading
-
 from socket_server import server_running, client_sockets, CommandLineHandler
 from utils import common_utils
+import socket
+from prometheus_client import start_http_server, Summary, Counter, Gauge
+import psutil
 
 
-def signal_handler(sig, frame):
-    global server_running
-    print("Ctrl+C pressed. Initiating server shutdown.")
-    server_running.clear()
-
-    # Notify all connected clients about the shutdown
-    for client_socket in client_sockets:
-        try:
-            client_socket.sendall("Server is shutting down. Goodbye!".encode('utf-8'))
-            client_socket.close()
-        except Exception as e:
-            print(f"Error notifying client about shutdown: {e}")
-
-    os._exit(0)
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
+REQUEST_COUNTER = Counter('request_count', 'Total request count')
+THREAD_COUNT = Gauge('thread_count', 'Number of threads in use')
+MEMORY_USAGE = Gauge('memory_usage', 'Memory usage in bytes')
 
 
-def start_server(host, http_port, command_line_port, log_file):
-    log_thread = threading.Thread(target=common_utils.log_writer, args=(log_file,server_running,))
+class IPv6TCPServer(socketserver.ThreadingTCPServer):
+    address_family = socket.AF_INET6
+
+
+class IPv4TCPServer(socketserver.ThreadingTCPServer):
+    address_family = socket.AF_INET
+
+
+def execute_p_socket(host, port, address_family, handler):
+    socketserver.TCPServer.allow_reuse_address = True
+    if address_family == socket.AF_INET:
+        print("ipv4")
+        server = IPv4TCPServer((host, port), handler)
+    elif address_family == socket.AF_INET6:
+        print("ipv6")
+        server = IPv6TCPServer((host, port), handler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
+    return server_thread
+
+
+def start_metrics_server():
+    start_http_server(8000)
+    while True:
+        THREAD_COUNT.set(threading.active_count())
+        MEMORY_USAGE.set(psutil.Process(os.getpid()).memory_info().rss)
+        time.sleep(1)
+
+
+def start_server(host_ipv4, http_port_ipv4, command_line_port_ipv4, host_ipv6, http_port_ipv6, command_line_port_ipv6, log_file):
+    print(host_ipv4, host_ipv6, http_port_ipv4, http_port_ipv6, command_line_port_ipv4, command_line_port_ipv6, log_file)
+    log_thread = threading.Thread(target=common_utils.log_writer, args=(log_file, server_running,))
     log_thread.start()
 
-    log_message_start = f"Starting server"
+    log_message_start = "Starting server"
     common_utils.log_queue.put(log_message_start)
 
-    # # agregar getaddrinfo para poder hacerlo andar en ipv6
-    flask_thread = threading.Thread(target=flask_app.run, kwargs={'host': host, 'port': http_port, 'threaded': True, 'use_reloader': False, 'debug': False})
-    flask_thread.start()
+    # Update Flask app to bind to both IPv4 and IPv6
+    flask_thread_ipv4 = threading.Thread(target=flask_app.run, kwargs={'host': host_ipv4, 'port': int(http_port_ipv4), 'threaded': True, 'use_reloader': False, 'debug': False})
+    flask_thread_ipv6 = threading.Thread(target=flask_app.run, kwargs={'host': host_ipv6, 'port': int(http_port_ipv6), 'threaded': True, 'use_reloader': False, 'debug': False})
+    flask_thread_ipv4.start()
+    flask_thread_ipv6.start()
 
-    # Start the command-line server and log writer as before
-    command_line_server = socketserver.ThreadingTCPServer((host, command_line_port), CommandLineHandler)
-    command_line_thread = threading.Thread(target=command_line_server.serve_forever)
-    command_line_thread.start()
+    command_line_thread_ipv4 = execute_p_socket(host_ipv4, int(command_line_port_ipv4), socket.AF_INET, CommandLineHandler)
+    command_line_thread_ipv6 = execute_p_socket(host_ipv6, int(command_line_port_ipv6), socket.AF_INET6, CommandLineHandler)
 
-    print(f'Servidor HTTP escuchando en puerto: {http_port}, command line escuchando en puerto: {command_line_port}')
-    log_message_start = f"Servidor HTTP escuchando en puerto: {http_port}, command line escuchando en puerto: {command_line_port}"
-    common_utils.log_queue.put(log_message_start)
+    metrics_thread = threading.Thread(target=start_metrics_server)
+    metrics_thread.start()
 
-    signal.signal(signal.SIGINT, signal_handler)
+    print(f'Servidor HTTP escuchando IPV4 en puerto: {http_port_ipv4}, command line escuchando IPV4 en puerto: {command_line_port_ipv4}')
+    log_message_start_ipv4 = f"Servidor HTTP escuchando IPV4 en puerto: {http_port_ipv4}, command line escuchando IPV4 en puerto: {command_line_port_ipv4}"
+    common_utils.log_queue.put(log_message_start_ipv4)
 
-    # Wait for command-line server and log writer threads to finish before exiting
-    flask_thread.join()
-    command_line_thread.join()
+    print(f'Servidor HTTP escuchando IPV6 en puerto: {http_port_ipv6}, command line escuchando IPV6 en puerto: {command_line_port_ipv6}')
+    log_message_start_ipv6 = f"Servidor HTTP escuchando IPV6 en puerto: {http_port_ipv6}, command line escuchando IPV6 en puerto: {command_line_port_ipv6}"
+    common_utils.log_queue.put(log_message_start_ipv6)
+
+
+    flask_thread_ipv4.join()
+    flask_thread_ipv6.join()
+    command_line_thread_ipv4.join()
+    command_line_thread_ipv6.join()
     log_thread.join()
-
+    metrics_thread.join()
 
 def main():
     parser = argparse.ArgumentParser(description='Multithreaded server')
-    parser.add_argument('--host', type=str, default='localhost', help='Server host')
-    parser.add_argument('--http_port', type=int, default=8080, help='HTTP port')
-    parser.add_argument('--command_line_port', type=int, default=9090, help='Command-line port')
+    parser.add_argument('--host_ipv4', type=str, default='::', help='Server host')
+    parser.add_argument('--http_port_ipv4', type=str, default='8080', help='HTTP port')
+    parser.add_argument('--command_line_port_ipv4', type=str, default='9090', help='Command-line port')
+    parser.add_argument('--host_ipv6', type=str, default='::', help='Server host')
+    parser.add_argument('--http_port_ipv6', type=str, default='8081', help='HTTP port')
+    parser.add_argument('--command_line_port_ipv6', type=str, default='9091', help='Command-line port')
     parser.add_argument('--log_file', type=str, default='server.log', help='Log file path')
     args = parser.parse_args()
 
-    start_server(args.host, args.http_port, args.command_line_port, args.log_file)
-
+    start_server(args.host_ipv4, args.http_port_ipv4, args.command_line_port_ipv4, args.host_ipv6, args.http_port_ipv6, args.command_line_port_ipv6, args.log_file)
 
 if __name__ == '__main__':
     main()

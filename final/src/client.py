@@ -1,15 +1,21 @@
+import getpass
 import socket
-import threading
 import signal
 import sys
 import os
+import argparse
+import select
 
 class Client:
-    def __init__(self, server_address, server_port):
+    def __init__(self, server_address, server_port, address_family):
         self.server_address = server_address
         self.server_port = server_port
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.address_family = address_family
+
+        self.client_socket = socket.socket(self.address_family, socket.SOCK_STREAM)
         self.client_running = True
+        self.password_prompt = False
+        self.new_password_prompt = False
 
     def signal_handler(self, sig, frame):
         print("Ctrl+C pressed. Disconnecting from server.")
@@ -17,23 +23,25 @@ class Client:
         self.client_socket.close()
         os._exit(0)
 
-    def receive_messages(self):
-        while self.client_running:
-            try:
-                response = self.client_socket.recv(1024).decode('utf-8')
-                if response:
-                    print(f"Server Response: {response}")
+    def receive_message(self):
+        try:
+            response = self.client_socket.recv(2048).decode('utf-8')
+            if response:
+                print(f"Server Response: {response}")
+                if "SERVER_SHUTDOWN" in response:
+                    print("Server is shutting down. Goodbye!")
+                    self.client_running = False
+                    os._exit(0)
+                if "Enter password:" in response:
+                    self.password_prompt = True
+                elif "Enter new password:" in response:
+                    self.new_password_prompt = True
+                else:
+                    self.password_prompt = False
 
-                    # Check for a shutdown message from the server
-                    if "Server is shutting down" in response:
-                        print("Server is shutting down. Goodbye!")
-                        self.client_running = False
-                        break
-
-            except (ConnectionError, BrokenPipeError):
-                print("Server disconnected unexpectedly.")
-                break
-        sys.exit(0)
+        except (ConnectionError, BrokenPipeError):
+            print("Server disconnected unexpectedly.")
+            self.client_running = False
 
     def send_command_to_server(self, command):
         try:
@@ -41,89 +49,60 @@ class Client:
 
         except (ConnectionError, BrokenPipeError):
             print("Server disconnected unexpectedly.")
-            # Handle disconnection as needed (e.g., close the client socket, exit the client)
             self.client_socket.close()
             self.client_running = False
-            sys.exit()
 
         except Exception as e:
             print(f"Error communicating with the server: {e}")
 
-    def login(self, username, password):
+    def connect(self):
         try:
             self.client_socket.connect((self.server_address, self.server_port))
-            self.client_socket.sendall(f"LOGIN {username} {password}".encode('utf-8'))
+            print("Connected to the server. You can now login or signup.")
+            return True
+        except Exception as e:
+            print(f"Error connecting to the server: {e}")
+            return False
 
-            response = self.client_socket.recv(1024).decode('utf-8')
-            print(f"Server Response: {response}")
+def main():
+    parser = argparse.ArgumentParser(description="Client for IPv4 and IPv6 server.")
+    parser.add_argument('protocol', choices=['ipv4', 'ipv6'], help="Specify whether to use IPv4 or IPv6.")
+    parser.add_argument('server_address', help="The server address to connect to.")
+    parser.add_argument('server_port', type=int, help="The server port to connect to.")
+    args = parser.parse_args()
 
-            if "Login successful" in response:
-                print("Login successful! You can now interact with the server.")
+    if args.protocol == 'ipv4':
+        address_family = socket.AF_INET
+    elif args.protocol == 'ipv6':
+        address_family = socket.AF_INET6
 
-                # Start a thread to receive messages from the server
-                receive_thread = threading.Thread(target=self.receive_messages)
-                receive_thread.start()
+    client = Client(args.server_address, args.server_port, address_family)
 
-                # Continue handling user input in a new thread
-                while self.client_running:
-                    user_input = input("Enter a command (or 'exit' to quit): ")
+    signal.signal(signal.SIGINT, client.signal_handler)
+
+    if client.connect():
+        while client.client_running:
+            read_sockets, _, _ = select.select([client.client_socket, sys.stdin], [], [])
+
+            for sock in read_sockets:
+                if sock == client.client_socket:
+                    client.receive_message()
+                    if client.password_prompt:
+                        password = getpass.getpass("Enter password: ")
+                        client.send_command_to_server(password)
+                        client.password_prompt = False
+                    if client.new_password_prompt:
+                        new_password = getpass.getpass("Enter new password: ")
+                        client.send_command_to_server(new_password)
+                        client.new_password_prompt = False
+                elif sock == sys.stdin:
+                    user_input = input()
                     if user_input.lower() == 'exit':
+                        client.client_running = False
                         break
+                    client.send_command_to_server(user_input)
 
-                    input_thread = threading.Thread(target=self.send_command_to_server, args=(user_input,))
-                    input_thread.start()
-                    input_thread.join()
-
-                # Wait for the receive thread to finish before exiting
-                receive_thread.join()
-
-            else:
-                print("Login failed. Exiting...")
-
-        except ConnectionError as ce:
-            print(f"ConnectionError: {ce}")
-
-        except Exception as e:
-            print(f"Error communicating with the server: {e}")
-
-    def signup(self, new_username, new_password, new_email):
-        try:
-            self.client_socket.connect((self.server_address, self.server_port))
-            self.client_socket.sendall(f"SIGNUP {new_username} {new_password} {new_email}".encode('utf-8'))
-
-            response = self.client_socket.recv(1024).decode('utf-8')
-            print(f"Server Response: {response}")
-
-        except ConnectionError as ce:
-            print(f"ConnectionError: {ce}")
-
-        except Exception as e:
-            print(f"Error communicating with the server: {e}")
+        client.client_socket.close()
 
 if __name__ == "__main__":
-    # revisar el tema del puerto y address y arreglar el tema de desconxion
-    server_address = "172.21.0.3"
-    server_port = 9092
-
-    client = Client(server_address, server_port)
-
-    signal.signal(signal.SIGINT, client.signal_handler)  # Register signal handler for Ctrl+C
-
-    print("1. Login")
-    print("2. Signup")
-
-    choice = input("Enter your choice: ")
-
-    if choice == '1':
-        username = input("Enter your username: ")
-        password = input("Enter your password: ")
-        client.login(username, password)
-
-    elif choice == '2':
-        new_username = input("Enter a new username: ")
-        new_password = input("Enter a new password: ")
-        new_email = input("Enter a new email: ")
-        client.signup(new_username, new_password, new_email)
-
-    else:
-        print("Invalid choice. Exiting...")
+    main()

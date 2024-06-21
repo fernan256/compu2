@@ -1,1 +1,1 @@
-from .models import db, User, Recital
+from .models import db, Users, Recitals

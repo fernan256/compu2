@@ -17,6 +17,9 @@ werkzeug = "*"
 flask-wtf = "*"
 email-validator = "*"
 cryptography = "*"
+tabulate = "*"
+prometheus-client = "*"
+psutil = "*"
 
 [dev-packages]
 

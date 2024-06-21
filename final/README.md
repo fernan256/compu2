@@ -52,3 +52,29 @@
 --volume=/storage/docker/mysql-data:/var/lib/mysql \
 
 #### python src/main_flask.py --host localhost --http_port 8082 --command_line_port 9092 --log_file src/output.txt
+
+
+python -m init_db.py 
+
+for save_recital.py
+
+pipenv shell
+
+
+to run scrappers
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
+cd /home/diego/Documents/11-universidad/um-compu2/compu2/final/src
+ clear && python scrappers/save_recitals.py
+
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' final-python-1
+
+clear && docker compose build \
+    --build-arg HOST_IPV4='0.0.0.0' \
+    --build-arg HTTP_PORT_IPV4=8082 \
+    --build-arg COMMAND_LINE_PORT_IPV4=9092 \
+    --build-arg HOST_IPV6='::' \
+    --build-arg HTTP_PORT_IPV6=8083 \
+    --build-arg COMMAND_LINE_PORT_IPV6=9093 \
+    --build-arg LOG_FILE=output.log \
+    && docker compose up

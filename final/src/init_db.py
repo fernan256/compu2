@@ -1,6 +1,6 @@
-from flask_app import flask_app, db
+from app.flask_app import flask_app, db
 
-from models import User, Recital
+from app.models import Users, Recitals
 
 with flask_app.app_context():
     db.create_all()

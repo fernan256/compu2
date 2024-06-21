@@ -3,40 +3,92 @@
 {% block title %}Buscador{% endblock %}
 
 {% block content %}
-    <h2>Buscar Recitales</h2>
-    <form method="POST" action="{{ url_for('update_recitals') }}">
-        <button type="submit">Update Recitals</button>
-    </form>
-    <!-- Add a search box -->
-    <form action="{{ url_for('search') }}" method="post">
-        <label for="search">Search:</label>
-        <input type="text" id="search" name="search" placeholder="Enter search term">
-        <button type="submit">Search</button>
+    <h1>Recitals</h1>
+        
+    <!-- Search Form -->
+    <form id="searchForm" method="POST" action="{{ url_for('search') }}">
+        {{ form.hidden_tag() }}
+        <input type="text" id="search" name="search" placeholder="Search recitals..." value="{{ search_term }}" onkeyup="checkSearchLength()">
+        <button type="submit" id="searchButton">Search</button>
+        <button type="button" id="resetButton" class="btn btn-secondary" onclick="resetSearch()">Reset</button>
     </form>
 
-    <!-- Add a table for displaying data -->
+    <h1>Your Favorite Recitals</h1>
+    <ul>
+        {% for recital in favorites %}
+        <li>{{ recital.artist }} at {{ recital.venue }} on {{ recital.date.strftime('%d/%m/%Y') }}
+            <form action="{{ url_for('remove_favorite', recital_id=recital.id) }}" method="post" style="display:inline;">
+                <button type="submit">Remove from Favorites</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Recital List -->
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <!-- Add more table headers as needed -->
+                <th>Artist</th>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>Link</th>
+                <th>Favorite</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in items %}
-                <tr>
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.name }}</td>
-                    <!-- Add more table cells as needed -->
-                </tr>
+            {% for recital in recitals %}
+            <tr>
+                <td>{{ recital.artist }}</td>
+                <td>{{ recital.date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ recital.venue }}</td>
+                <td><a href="{{ recital.link }}">{{ recital.link }}</a></td>
+                <td>
+                    <form action="{{ url_for('add_favorite', recital_id=recital.id) }}" method="post" style="display:inline;">
+                        <button type="submit">Add to Favorites</button>
+                    </form>
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
-    <h2>Lista de Paginas</h2>
-    <ul>
-        {% for url in url_data %}
-            <li><a href="{{ url_for('get_urls', url_id=url['id']) }}">{{ url['url'] }}</a></li>
-        {% endfor %}
-    </ul>
+
+    <!-- Pagination -->
+    <div>
+        {% if page > 1 %}
+        <a href="{{ url_for('recitals', page=page-1, per_page=per_page) }}">Previous</a>
+        {% endif %}
+        Page {{ page }} of {{ (total // per_page) + (1 if total % per_page else 0) }}
+        {% if page * per_page < total %}
+        <a href="{{ url_for('recitals', page=page+1, per_page=per_page) }}">Next</a>
+        {% endif %}
+    </div>
+    <script>
+        function checkSearchLength() {
+            var searchInput = document.getElementById('search').value;
+            var searchButton = document.getElementById('searchButton');
+            if (searchInput.length >= 3) {
+                searchButton.disabled = false;
+            } else {
+                searchButton.disabled = true;
+            }
+        }
+
+        function resetSearch() {
+            document.getElementById('search').value = '';
+            checkSearchLength();
+            document.getElementById('searchForm').submit();
+        }
+
+        // Initialize the button state on page load
+        window.onload = function() {
+            checkSearchLength();
+            var searchInput = document.getElementById('search').value;
+            var searchButton = document.getElementById('searchButton');
+            if (searchInput.length >= 3 || searchInput.length > 0) {
+                searchButton.disabled = false;
+            } else {
+                searchButton.disabled = true;
+            }
+        };
+    </script>
 {% endblock %}
