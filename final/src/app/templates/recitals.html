@@ -3,22 +3,30 @@
 {% block title %}Buscador{% endblock %}
 
 {% block content %}
-    <h1>Recitals</h1>
+    <h1>Actualizar Recitales</h1>
+
+    <!-- Search Form -->
+    <form id="updateForm" method="POST" action="{{ url_for('update_recitals') }}">
+        <button type="button" id="updateButton" class="btn btn-secondary" onclick="submitUpdateForm()">Actualizar</button>
+        <div class="msg">{% with messages = get_flashed_messages() %}{% if messages %}{% for message in messages %}{{ message }}{% endfor %}{% endif %}{% endwith %}</div>
+    </form>
+
+    <h1>Recitales</h1>
         
     <!-- Search Form -->
     <form id="searchForm" method="POST" action="{{ url_for('search') }}">
         {{ form.hidden_tag() }}
-        <input type="text" id="search" name="search" placeholder="Search recitals..." value="{{ search_term }}" onkeyup="checkSearchLength()">
-        <button type="submit" id="searchButton">Search</button>
-        <button type="button" id="resetButton" class="btn btn-secondary" onclick="resetSearch()">Reset</button>
+        <input type="text" id="search" name="search" placeholder="Buscar recitales..." value="{{ search_term }}" onkeyup="checkSearchLength()">
+        <button type="submit" id="searchButton">Buscar</button>
+        <button type="button" id="resetButton" class="btn btn-secondary" onclick="resetSearch()">Resetear</button>
     </form>
 
-    <h1>Your Favorite Recitals</h1>
+    <h1>Tus Favoritos</h1>
     <ul>
         {% for recital in favorites %}
         <li>{{ recital.artist }} at {{ recital.venue }} on {{ recital.date.strftime('%d/%m/%Y') }}
             <form action="{{ url_for('remove_favorite', recital_id=recital.id) }}" method="post" style="display:inline;">
-                <button type="submit">Remove from Favorites</button>
+                <button type="submit">X</button>
             </form>
         </li>
         {% endfor %}
@@ -28,11 +36,11 @@
     <table>
         <thead>
             <tr>
-                <th>Artist</th>
-                <th>Date</th>
-                <th>Venue</th>
+                <th>Artista</th>
+                <th>Fecha</th>
+                <th>Lugar</th>
                 <th>Link</th>
-                <th>Favorite</th>
+                <th>Favorito</th>
             </tr>
         </thead>
         <tbody>
@@ -44,7 +52,7 @@
                 <td><a href="{{ recital.link }}">{{ recital.link }}</a></td>
                 <td>
                     <form action="{{ url_for('add_favorite', recital_id=recital.id) }}" method="post" style="display:inline;">
-                        <button type="submit">Add to Favorites</button>
+                        <button type="submit">Agregar</button>
                     </form>
                 </td>
             </tr>
@@ -55,11 +63,11 @@
     <!-- Pagination -->
     <div>
         {% if page > 1 %}
-        <a href="{{ url_for('recitals', page=page-1, per_page=per_page) }}">Previous</a>
+        <a href="{{ url_for('recitals', page=page-1, per_page=per_page) }}">Previas</a>
         {% endif %}
-        Page {{ page }} of {{ (total // per_page) + (1 if total % per_page else 0) }}
+        Pagina {{ page }} de {{ (total // per_page) + (1 if total % per_page else 0) }}
         {% if page * per_page < total %}
-        <a href="{{ url_for('recitals', page=page+1, per_page=per_page) }}">Next</a>
+        <a href="{{ url_for('recitals', page=page+1, per_page=per_page) }}">Siguientes</a>
         {% endif %}
     </div>
     <script>
@@ -77,6 +85,10 @@
             document.getElementById('search').value = '';
             checkSearchLength();
             document.getElementById('searchForm').submit();
+        }
+
+        function submitUpdateForm() {
+            document.getElementById('updateForm').submit();
         }
 
         // Initialize the button state on page load

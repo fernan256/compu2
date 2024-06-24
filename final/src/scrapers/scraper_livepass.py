@@ -1,7 +1,7 @@
-from bs4 import BeautifulSoup
 import requests
-from datetime import datetime
 
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 def split_name_venue(phrase):
   parts = phrase.split("en", maxsplit=1)

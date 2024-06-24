@@ -1,6 +1,6 @@
 # Final Computación 2
 
-## Scrapper de paginas web
+## Scraper de paginas web
 
 ### Resumen
 

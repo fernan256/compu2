@@ -16,3 +16,14 @@ def log_writer(log_file, server_running):
                 f.write(f'{timestamp} - {log_message}\n')
         except queue.Empty:
             pass
+
+def get_table_rows(recitals):
+    table_header = "Id | Artista | Fecha | Lugar | Link\n"
+    table_rows = []
+    for recital in recitals:
+        date = recital.date.strftime('%Y-%m-%d') if recital.date else ''
+        row = f"{recital.id} | {recital.artist} | {date} | {recital.venue} | {recital.link}\n"
+        table_rows.append(row)
+
+    table = table_header + ''.join(table_rows)
+    return table

@@ -1,10 +1,11 @@
+import argparse
 import getpass
-import socket
+import select
 import signal
+import socket
 import sys
 import os
-import argparse
-import select
+
 
 class Client:
     def __init__(self, server_address, server_port, address_family):
@@ -18,7 +19,7 @@ class Client:
         self.new_password_prompt = False
 
     def signal_handler(self, sig, frame):
-        print("Ctrl+C pressed. Disconnecting from server.")
+        print("Ctrl+C. Desconectando del server.")
         self.client_running = False
         self.client_socket.close()
         os._exit(0)
@@ -27,14 +28,14 @@ class Client:
         try:
             response = self.client_socket.recv(2048).decode('utf-8')
             if response:
-                print(f"Server Response: {response}")
+                print(f"{response}")
                 if "SERVER_SHUTDOWN" in response:
-                    print("Server is shutting down. Goodbye!")
+                    print("Server se esta apagando. Adios!")
                     self.client_running = False
                     os._exit(0)
-                if "Enter password:" in response:
+                if "Password:" in response:
                     self.password_prompt = True
-                elif "Enter new password:" in response:
+                elif "Nueva Contraseña:" in response:
                     self.new_password_prompt = True
                 else:
                     self.password_prompt = False
@@ -58,17 +59,17 @@ class Client:
     def connect(self):
         try:
             self.client_socket.connect((self.server_address, self.server_port))
-            print("Connected to the server. You can now login or signup.")
+            print("Conectado al servidor.")
             return True
         except Exception as e:
             print(f"Error connecting to the server: {e}")
             return False
 
 def main():
-    parser = argparse.ArgumentParser(description="Client for IPv4 and IPv6 server.")
-    parser.add_argument('protocol', choices=['ipv4', 'ipv6'], help="Specify whether to use IPv4 or IPv6.")
-    parser.add_argument('server_address', help="The server address to connect to.")
-    parser.add_argument('server_port', type=int, help="The server port to connect to.")
+    parser = argparse.ArgumentParser(description="Cliente para IPv4 e IPv6 server.")
+    parser.add_argument('protocol', choices=['ipv4', 'ipv6'], help="Especificar que version usar:  IPv4 or IPv6.")
+    parser.add_argument('server_address', help="Direccion del server.")
+    parser.add_argument('server_port', type=int, help="Puerto del server.")
     args = parser.parse_args()
 
     if args.protocol == 'ipv4':
@@ -88,11 +89,11 @@ def main():
                 if sock == client.client_socket:
                     client.receive_message()
                     if client.password_prompt:
-                        password = getpass.getpass("Enter password: ")
+                        password = getpass.getpass()
                         client.send_command_to_server(password)
                         client.password_prompt = False
                     if client.new_password_prompt:
-                        new_password = getpass.getpass("Enter new password: ")
+                        new_password = getpass.getpass()
                         client.send_command_to_server(new_password)
                         client.new_password_prompt = False
                 elif sock == sys.stdin:
