@@ -1,15 +1,17 @@
 import argparse
-from app import flask_app
-import time
 import os
+import psutil
 import signal
 import socketserver
-import threading
-from socket_server import server_running, client_sockets, CommandLineHandler
-from utils import common_utils
 import socket
+import time
+import threading
+
 from prometheus_client import start_http_server, Summary, Counter, Gauge
-import psutil
+from socket_server import server_running, client_sockets, CommandLineHandler
+
+from app.flask_app import flask_app
+from utils import common_utils
 
 
 REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
@@ -48,7 +50,6 @@ def start_metrics_server():
 
 
 def start_server(host_ipv4, http_port_ipv4, command_line_port_ipv4, host_ipv6, http_port_ipv6, command_line_port_ipv6, log_file):
-    print(host_ipv4, host_ipv6, http_port_ipv4, http_port_ipv6, command_line_port_ipv4, command_line_port_ipv6, log_file)
     log_thread = threading.Thread(target=common_utils.log_writer, args=(log_file, server_running,))
     log_thread.start()
 

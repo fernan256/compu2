@@ -1,19 +1,13 @@
-import getpass
-import argparse
+import math
 import socketserver
 import sys
+import signal
 import threading
 import time
-import queue
-import signal
-import os
-from app import flask_app, Config
+
 from utils import common_utils 
-import subprocess
-from sqlalchemy import text
-from app.models import Recitals
 from app.services import services
-from scrappers import save_recitals
+from scrapers import save_recitals
 
 
 server_running = threading.Event()
@@ -42,7 +36,7 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
 
         while server_running.is_set():
             try:
-                prompt = "Que quiere realizar LOGIN or SIGNUP? (type 'exit' to quit): "
+                prompt = "Que quiere realizar LOGIN or SIGNUP? ('exit' para Salir): "
                 client_socket.sendall(prompt.encode('utf-8'))
 
                 self.data = client_socket.recv(1024).strip()
@@ -77,10 +71,10 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
 
 
     def handle_login(self, client_socket):
-        client_socket.sendall("Enter username: ".encode('utf-8'))
+        client_socket.sendall("Username: ".encode('utf-8'))
         username = client_socket.recv(1024).strip().decode('utf-8')
 
-        client_socket.sendall("Enter password: ".encode('utf-8'))
+        client_socket.sendall("Password: ".encode('utf-8'))
         password = client_socket.recv(1024).strip().decode('utf-8')
 
         log_message = f"Login method"
@@ -89,15 +83,17 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
         try:
             user = services.authenticate_user(username, password)
             if user:
-                response = "Login successful! You can now interact with the server."
+                response = "Login correcto.\n"
                 client_socket.sendall(response.encode('utf-8'))
 
                 options = ("Seleccionar una opcion:\n"
                             "1. Listar Recitales Guardados\n"
                             "2. Buscar en paginas\n"
-                            "3. Editar Configuraciones de Usuario\n"
-                            "4. Actualizar recitales\n"
-                            "Type 'exit' to logout.\n")
+                            # "3. Editar Configuraciones de Usuario\n"
+                            "3. Agregar a Favoritos\n"
+                            "4. Eliminar de Favoritos\n"
+                            "5. Actualizar recitales\n"
+                            "'exit' para logout.\n")
                 client_socket.sendall(options.encode('utf-8'))
 
                 while server_running.is_set():
@@ -111,56 +107,56 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
                     elif user_input == '3':
                         self.edit_configurations(client_socket, options)
                     elif user_input == '4':
+                        self.add_to_favs(client_socket, options, user.id)
+                    elif user_input == '5':
+                        self.remove_from_favs(client_socket, options, user.id)
+                    elif user_input == '6':
                         self.trigger_scraper_process(client_socket, options)
                     else:
-                        client_socket.sendall("Command not recognized. Please try again.".encode('utf-8'))
+                        client_socket.sendall("Comando no reconocido. Tratar nuevamente.".encode('utf-8'))
                         client_socket.sendall(options.encode('utf-8'))
             else:
-                response = "Login failed. Exiting thread."
+                response = "Login falo. Saliendo del thread. \n"
                 client_socket.sendall(response.encode('utf-8'))
         except Exception as e:
             print(f"Error connecting: {e}")
-            response = "Failed to connect to the database. Exiting thread."
+            response = "No se pudo conectar a la base de datos. Saliendo del thread. \n"
             client_socket.sendall(response.encode('utf-8'))
 
 
     def handle_signup(self, client_socket):
-        client_socket.sendall("Enter new username: ".encode('utf-8'))
+        client_socket.sendall("Nuevo Usuario: ".encode('utf-8'))
         new_username = client_socket.recv(1024).strip().decode('utf-8')
 
-        client_socket.sendall("Enter new password: ".encode('utf-8'))
+        client_socket.sendall("Nueva Contraseña: ".encode('utf-8'))
         new_password = client_socket.recv(1024).strip().decode('utf-8')
 
-        client_socket.sendall("Enter new email: ".encode('utf-8'))
+        client_socket.sendall("Nuevo Email: ".encode('utf-8'))
         new_email = client_socket.recv(1024).strip().decode('utf-8')
 
         try:
-            newUser = services.create_user(new_username, new_password, new_email)
-            print(newUser)
+            services.create_user(new_username, new_password, new_email)
 
         except Exception as e:
             print(f"Error connecting: {e}")
-            response = f"{e}. Exiting thread."
+            response = f"{e}. Saliendo del thread."
             client_socket.sendall(response.encode('utf-8'))
 
 
     def list_recitals(self, client_socket, options, user_id):
         try:
-            page_option = "Pagina: "
+            page_option = "Indicar Pagina y Cantidad de elementos por pagina (opcional) ej (1 10): "
             client_socket.sendall(page_option.encode('utf-8'))
-            user_input2 = client_socket.recv(1024).strip().decode('utf-8')
-            parts = user_input2.split()
+            page_per_page = client_socket.recv(1024).strip().decode('utf-8')
+            parts = page_per_page.split()
             page = int(parts[0])
             per_page = int(parts[1]) if len(parts) > 1 else 10
             recitals, favorites, total = services.get_recitals(user_id, page=page, per_page=per_page)
-            table_header = "ID | Artist | Date | Venue | Link\n"
-            table_rows = []
-            for recital in recitals:
-                date = recital.date.strftime('%Y-%m-%d') if recital.date else ''
-                row = f"{recital.id} | {recital.artist} | {date} | {recital.venue} | {recital.link}\n"
-                table_rows.append(row)
-            table = table_header + ''.join(table_rows)
-            client_socket.sendall((table + '\n\n\n' + options).encode('utf-8'))
+            recitals_table = common_utils.get_table_rows(recitals)
+            if favorites:
+                recitals_table = recitals_table + ''.join(f'Favoritos: \n {common_utils.get_table_rows(favorites)}')
+            response = recitals_table + ''.join(f'Paginas: {math.ceil(total/per_page)}, Total: {total}')
+            client_socket.sendall((response + '\n\n\n' + options).encode('utf-8'))
         except Exception as e:
             print(f"Error listing recitals: {e}")
             client_socket.sendall("Error listing recitals.\n".encode('utf-8'))
@@ -169,42 +165,66 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
 
     def search_recitals(self, client_socket, options):
         try:
-            search_name = "Search name: "
+            search_name = "Buscador: "
             client_socket.sendall(search_name.encode('utf-8'))
-            user_input2 = client_socket.recv(1024).strip().decode('utf-8')
-            parts = user_input2.split()
+            page_per_page = client_socket.recv(1024).strip().decode('utf-8')
+            parts = page_per_page.split()
             search_term = parts[0]
             page = int(parts[1]) if len(parts) > 1 else 1
             per_page = int(parts[2]) if len(parts) > 2 else 10
             recitals, total = services.search_recitals(search_term, page=page, per_page=per_page)
-            table_header = "ID | Artist | Date | Venue | Link \n"
-            table_rows = []
-            for recital in recitals:
-                date = recital.date.strftime('%Y-%m-%d') if recital.date else ''
-                row = f"{recital.id} | {recital.artist} | {date} | {recital.venue} | {recital.link}\n"
-                table_rows.append(row)
-            table = table_header + ''.join(table_rows)
-            client_socket.sendall((table + '\n\n\n' + options).encode('utf-8'))
+            recitals_table = common_utils.get_table_rows(recitals)
+            response = recitals_table + ''.join(f'\nPaginas: {math.ceil(total/per_page)}, Total: {total}')
+            client_socket.sendall((response + '\n\n\n' + options).encode('utf-8'))
         except Exception as e:
             print(f"Error searching recitals: {e}")
             client_socket.sendall("Error searching recitals.\n".encode('utf-8'))
             client_socket.sendall(options.encode('utf-8'))
 
 
-    def edit_configurations(self, client_socket, options):
+    def add_to_favs(self, client_socket, options, user_id):
         try:
-            client_socket.sendall("Edit configurations feature is not yet implemented.\n".encode('utf-8'))
-            client_socket.sendall(options.encode('utf-8'))
+            search_name = "Id Recital: "
+            client_socket.sendall(search_name.encode('utf-8'))
+            id_recital = client_socket.recv(1024).strip().decode('utf-8')
+            parts = id_recital.split()
+            recitals = services.add_favorite(user_id, parts[0])
+            if recitals:
+                client_socket.sendall((f"Recital con ID:{parts[0]} Agregado a Favoritos" + '\n\n\n' + options).encode('utf-8'))
         except Exception as e:
-            print(f"Error editing configurations: {e}")
-            client_socket.sendall("Error editing configurations.\n".encode('utf-8'))
+            print(f"Error searching recitals: {e}")
+            client_socket.sendall("Error searching recitals.\n".encode('utf-8'))
             client_socket.sendall(options.encode('utf-8'))
+
+
+    def remove_from_favs(self, client_socket, options, user_id):
+        try:
+            search_name = "Id Recital: "
+            client_socket.sendall(search_name.encode('utf-8'))
+            id_recital = client_socket.recv(1024).strip().decode('utf-8')
+            parts = id_recital.split()
+            recitals = services.remove_favorite(user_id, parts[0])
+            if recitals:
+                client_socket.sendall((f"Recital con ID:{parts[0]} Eliminado de Favoritos" + '\n\n\n' + options).encode('utf-8'))
+        except Exception as e:
+            print(f"Error searching recitals: {e}")
+            client_socket.sendall("Error searching recitals.\n".encode('utf-8'))
+            client_socket.sendall(options.encode('utf-8'))
+
+
+    # def edit_configurations(self, client_socket, options):
+    #     try:
+    #         client_socket.sendall("Edit configurations feature is not yet implemented.\n".encode('utf-8'))
+    #         client_socket.sendall(options.encode('utf-8'))
+    #     except Exception as e:
+    #         print(f"Error editing configurations: {e}")
+    #         client_socket.sendall("Error editing configurations.\n".encode('utf-8'))
+    #         client_socket.sendall(options.encode('utf-8'))
 
 
     def trigger_scraper_process(self, client_socket, options):
         try:
-            manager = save_recitals.ScraperManager()
-            manager.run()
+            services.update_recitals()
             client_socket.sendall("Scraper triggered.\n".encode('utf-8'))
             client_socket.sendall(options.encode('utf-8'))
         except Exception as e:

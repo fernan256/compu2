@@ -1,15 +1,16 @@
 import threading
 import time
+
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from app import flask_app
-from .scrapper_indihoy import scrap_indihoy
-from .scrapper_livepass import scrap_livepass
-from .scrapper_songkick import scrap_songkick
-from .scrapper_tu_entrada import scrap_tu_entrada
+
+from app.flask_app import flask_app
 from app.models import Recitals
 from app.services import services
-from concurrent.futures import ThreadPoolExecutor
-
+from .scraper_indihoy import scrap_indihoy
+from .scraper_livepass import scrap_livepass
+from .scraper_songkick import scrap_songkick
+from .scraper_tu_entrada import scrap_tu_entrada
 
 
 class ScraperManager:

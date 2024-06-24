@@ -1,27 +1,30 @@
 import os
-from os.path import join, dirname
 import time
+
+from datetime import datetime
+from dotenv import load_dotenv
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, redirect, url_for, flash
+from os.path import join, dirname
+from werkzeug.security import generate_password_hash
+
 from .models import db, Users, Recitals
 from .forms import LoginForm, SignupForm, RecitalForm, SearchForm
 from .services import services
-from datetime import datetime
 from .config import Config
 from utils import common_utils
-from dotenv import load_dotenv
+
 
 
 dotenv_path = join(dirname(__file__), '.env')
-print(f"dotenv_path {dotenv_path}")
 load_dotenv(dotenv_path)
-
 
 flask_app = Flask(__name__)
 flask_app.config.from_object(Config)
-db.init_app(flask_app)
 flask_app.secret_key = os.getenv('FLASK_SECRET_KEY')
+
+db.init_app(flask_app)
+
 login_manager = LoginManager()
 login_manager.init_app(flask_app)
 login_manager.login_view = 'login'
@@ -50,19 +53,10 @@ def profile():
     return render_template('profile.html', account='account')
 
 
-@flask_app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = SignupForm()
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8)
-            new_user = Users(username=form.username.data, email=form.email.data, password=hashed_password)
-            print(f"new_user: {new_user}")
-            db.session.add(new_user)
-            db.session.commit()
-            flash('You have successfully signed up!')
-            return redirect(url_for('login'))
-    return render_template('register.html', form=form)
+@flask_app.route("/logout")
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 
 @flask_app.route('/login', methods=['GET', 'POST'])
@@ -86,6 +80,21 @@ def login():
     else:
         print('not valid')
     return render_template('login.html', form=form)
+
+
+@flask_app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = SignupForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8)
+            new_user = Users(username=form.username.data, email=form.email.data, password=hashed_password)
+            print(f"new_user: {new_user}")
+            db.session.add(new_user)
+            db.session.commit()
+            flash('You have successfully signed up!')
+            return redirect(url_for('login'))
+    return render_template('register.html', form=form)
 
 
 @flask_app.route('/search', methods=['POST'])
@@ -115,31 +124,24 @@ def recitals():
 
 
 @flask_app.route('/add_favorite/<int:recital_id>', methods=['POST'])
+@login_required
 def add_favorite(recital_id):
     services.add_favorite(current_user.id, recital_id)
     flash('Recital added to favorites.')
     return redirect(url_for('recitals'))
 
+
 @flask_app.route('/remove_favorite/<int:recital_id>', methods=['POST'])
+@login_required
 def remove_favorite(recital_id):
     services.remove_favorite(current_user.id, recital_id)
     flash('Recital removed from favorites.')
     return redirect(url_for('recitals'))
 
 
-
-@flask_app.route('/logout', methods=['GET', 'POST'])
-def logout():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        if username in users and users[username] == password:
-            message = 'Successfully logged in'
-            return redirect(url_for('index'))
-
-        error = 'Invalid username or password'
-        return render_template('index.html', error=error)
-
-    return render_template('index.html')
-
+@flask_app.route('/update', methods=['POST', 'GET'])
+@login_required
+def update_recitals():
+    services.update_recitals()
+    flash('Proceso de Actualizacion de recitales finalizado.')
+    return redirect(url_for('recitals'))

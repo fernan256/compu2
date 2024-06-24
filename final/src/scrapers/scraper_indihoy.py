@@ -1,5 +1,6 @@
-from bs4 import BeautifulSoup
 import requests
+
+from bs4 import BeautifulSoup
 from datetime import datetime
 
 def scrap_indihoy():

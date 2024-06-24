@@ -1,10 +1,8 @@
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from datetime import datetime
-
 
 db = SQLAlchemy()
-
 
 user_favorites = db.Table('user_favorites',
     db.Column('users_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),

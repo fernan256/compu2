@@ -1,6 +1,6 @@
 # Final Computación 2
 
-## Scrapper de paginas web
+## Scraper de paginas web
 
 ### Informacion del proyecto
 
@@ -110,7 +110,7 @@ cd final/
 pipenv shell
 cd src/
 export PYTHONPATH=$(pwd):$PYTHONPATH
-clear && python scrappers/save_recitals.py
+clear && python scrapers/save_recitals.py
 ```
 
 

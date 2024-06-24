@@ -2,12 +2,14 @@ from datetime import datetime
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models import Users, Recitals
-from app.config import Config
 from sqlalchemy import create_engine
-
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
+
+from app.models import Users, Recitals
+from app.config import Config
+from scrapers import save_recitals
+
 
 engine = create_engine(Config.get_sqlalchemy_uri(), pool_pre_ping=True)
 
@@ -90,7 +92,6 @@ def add_recital(artist, date, date_string, venue, link):
         session.commit()
 
 
-
 def add_favorite(user_id, recital_id):
     with get_db_session() as session:
         user = session.query(Users).get(user_id)
@@ -110,4 +111,7 @@ def remove_favorite(user_id, recital_id):
             session.commit()
         return True
 
- 
+
+def update_recitals():
+    manager = save_recitals.ScraperManager()
+    manager.run()
