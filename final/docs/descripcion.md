@@ -4,31 +4,40 @@
 
 ### Resumen
 
-#### El trabajo se basara en un sistema de scrapping de paginas de eventos (o cualquier pagina). Se realizará un procesado a la información que se obtenga y se permitirá guardar dicha información en una base de datos. Ademas se le dará la posibilidad al usuario de poder generar eventos en un calendario para dichos scrapping, ejemplo scrapear páginas web de recitales y poder guardar la info en una db y al mismo tiempo guardar el evento en un calendario.
+El trabajo se basara en un sistema de scrapping de paginas de eventos. Se realizará un procesado a la información que se obtenga y se permitirá guardar dicha información en una base de datos. El scraper 
 
-#### Cuando se pase una web para scraping el sistema buscara primero en la base de datos si la misma no fue scrapeada anteriormente, en caso de existir en la base de datos, se escribira en el log.txt desde el hilo y se devolvera la informacion guardad.
+Las paginas que se pueden scrapear son indihoy, livepass, songkick y tu entrada, se realizara el scraper particular para cada una de ellas. La forma en que el scraper funcionara sera el siguiente, se creara un servicio para scrapear que se podra dispara bajo demanda, el cual creara 1 hilo por cada scraper cada uno de ellos hara la tarea de scraper y luego a la hora de guardar en la base de datos, primero chequeara que el evento no exista en la db (buscar duplicados), en caso de que exista no hara nada y si no existe se guardar en la base de datos, lo otro sera verificar eventos pasados a los cuales se les pondra el flag de delete = true.
 
-#### Para la seguridad se agregara la posiblidad de crear/loguearse en una cuenta. Cada usuario podra crear su cuenta y loguearse.
+Para la seguridad se agregara la posiblidad de crear/loguearse en una cuenta. Cada usuario podra crear su cuenta y loguearse.
 
-#### Contara con una pequenia interfaz de usuario en la cual se mostrara la informacion scrapeada.
+Se podra usar tando linea de comandos como una pagina web para ver los recitales guardados.
 
-#### Cada usuario se conectara al servidor y podrá enviar 1 url para ser scrapeada, se le darán opciones al usuario para que pueda guardar en la base de datos, y colocar evento en el calendario. También podrá correr en linea de comandos con las opciones necesarias para scrapear, guardar y colocar evento en calendario.
+Contara con una pequeña interfaz de usuario en la cual se mostrara la informacion scrapeada.
 
-#### Se utlizaran contenedores para tanto para las aplicaciones, como para la base de datos. Se utlizara docker compose para levantar el entorno.
+Cada usuario se conectara al servidor y podrá listar eventos, agregar y eliminar de favoritos y ejecutar un proceso para actualizar recitales.
+
+Se utlizaran contenedores tanto para las aplicaciones, como para la base de datos. Se utlizara docker compose para levantar el entorno.
+
+Ademas se agregara un parte de observabilidad para conocer el estado del contenedor sabien memoria utilizada y cantidad de hilos creados.
 
 ### Hilos vs Subprocesos
 
-#### Luego de un analisis entre ambas herramientas, para concurrencia, me decidi hilos, ya que estos son mas livianos en la creacion, comparten memoria y recursos y al ser mayormente operaciones de I/O, la utilizacion de hilos parece ser una mejor opcion que el uso de subprocesos. Al utilizar hilos podremos scrapear multiples pagainas al mismo tiempo, sin necesidad de bloquear la ejecucion del programa.
+Luego de un analisis entre ambas herramientas, para concurrencia, me decidi hilos, ya que estos son mas livianos en la creacion, comparten memoria y recursos y al ser mayormente operaciones de I/O, la utilizacion de hilos parece ser una mejor opcion que el uso de subprocesos. Al utilizar hilos podremos scrapear multiples pagainas al mismo tiempo, sin necesidad de bloquear la ejecucion del programa.
 
 ### Elementos que se usaran
 
-#### Hilos para multiples conexiones de clientes de manera concurrente.
-#### Mecanismos de IPC como pipes.
-#### Parseo de argumentos par linea de comandos.
-#### Uso de contenedores para la aplicacion como para la base de datos.
-#### Base de datos.
-#### Interfaz de usuario
+Hilos para multiples conexiones de clientes de manera concurrente.
+Mecanismos de IPC como queues.
+Parseo de argumentos por linea de comandos.
+Uso de contenedores para la aplicacion como para la base de datos.
+Base de datos.
+Interfaz de usuario.
+Observabilidad.
 
 ### Diagramas
 
 ![Diagrama_Trabajo_Final-Page-2 drawio](https://github.com/fernan256/compu2/assets/8095849/005de424-642a-4ebc-bd94-e130768220c8)
+
+### Links
+
+https://drive.google.com/file/d/14v6VHwoDQnwm1dKRoGHeFsj6c2z5nM4e/view

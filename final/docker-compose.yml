@@ -17,10 +17,6 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: always
-    # volumes:
-      # - type: bind
-      #   source: ./src
-      #   target: /app
     volumes:
       - ./src:/app
     depends_on:
@@ -31,8 +27,6 @@ services:
     networks:
       - main-network
       - ip6net
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
     links:
       - db:mysql_db
 
