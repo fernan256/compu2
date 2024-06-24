@@ -36,7 +36,7 @@ Observabilidad.
 
 ### Diagramas
 
-![Diagrama_Trabajo_Final-Page-2 drawio](https://github.com/fernan256/compu2/assets/8095849/005de424-642a-4ebc-bd94-e130768220c8)
+![diagrama-v2](https://github.com/fernan256/compu2/blob/main/final/docs/diagrama-v2.png)
 
 ### Links
 
