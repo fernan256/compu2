@@ -68,12 +68,12 @@ def start_server(host_ipv4, http_port_ipv4, command_line_port_ipv4, host_ipv6, h
     metrics_thread = threading.Thread(target=start_metrics_server)
     metrics_thread.start()
 
-    print(f'Servidor HTTP escuchando IPV4 en puerto: {http_port_ipv4}, command line escuchando IPV4 en puerto: {command_line_port_ipv4}')
-    log_message_start_ipv4 = f"Servidor HTTP escuchando IPV4 en puerto: {http_port_ipv4}, command line escuchando IPV4 en puerto: {command_line_port_ipv4}"
+    print(f'Servidor HTTP escuchando IPV4 en puerto: {http_port_ipv4}, Servidor CMD escuchando IPV4 en puerto: {command_line_port_ipv4}')
+    log_message_start_ipv4 = f"Servidor HTTP escuchando IPV4 en puerto: {http_port_ipv4}, Servidor CMD escuchando IPV4 en puerto: {command_line_port_ipv4}"
     common_utils.log_queue.put(log_message_start_ipv4)
 
-    print(f'Servidor HTTP escuchando IPV6 en puerto: {http_port_ipv6}, command line escuchando IPV6 en puerto: {command_line_port_ipv6}')
-    log_message_start_ipv6 = f"Servidor HTTP escuchando IPV6 en puerto: {http_port_ipv6}, command line escuchando IPV6 en puerto: {command_line_port_ipv6}"
+    print(f'Servidor HTTP escuchando IPV6 en puerto: {http_port_ipv6}, Servidor CMD escuchando IPV6 en puerto: {command_line_port_ipv6}')
+    log_message_start_ipv6 = f"Servidor HTTP escuchando IPV6 en puerto: {http_port_ipv6}, Servidor CMD escuchando IPV6 en puerto: {command_line_port_ipv6}"
     common_utils.log_queue.put(log_message_start_ipv6)
 
 
