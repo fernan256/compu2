@@ -7,7 +7,6 @@ import time
 
 from utils import common_utils 
 from app.services import services
-from scrapers import save_recitals
 
 
 server_running = threading.Event()
@@ -19,6 +18,7 @@ def signal_handler(sig, frame):
     print('Received Ctrl+C (SIGINT) to stop the server')
     for client in client_sockets:
         try:
+            common_utils.log_queue.put("Cerrando conexion con clientes.")
             client.sendall(b'SERVER_SHUTDOWN')
             client.close()
         except Exception as e:
@@ -35,27 +35,32 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
         client_sockets.append(client_socket)
 
         while server_running.is_set():
-            try:
+            try:                
+                common_utils.log_queue.put(f"Cliente conectado al thread nombre: {threading.current_thread().name} (ID: {threading.current_thread().ident}).")
                 prompt = "Que quiere realizar LOGIN or SIGNUP? ('exit' para Salir): "
                 client_socket.sendall(prompt.encode('utf-8'))
 
                 self.data = client_socket.recv(1024).strip()
+                
                 if not self.data:
                     break
-                print(f'data: {self.data}')
+
                 command = self.data.decode('utf-8').lower()
                 
                 if command == 'exit':
                     break
                 
                 if command == 'login':
+                    common_utils.log_queue.put(f"login para cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}).")
                     self.handle_login(client_socket)
 
                 elif command == 'signup':
+                    common_utils.log_queue.put(f"signup para cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}).")
                     self.handle_signup(client_socket)
 
                 else:
-                    response = "Invalid command."
+                    common_utils.log_queue.put(f"comando invalido: {command} cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}).")
+                    response = "Comando Invalido."
                     client_socket.sendall(response.encode('utf-8'))
 
             except BrokenPipeError:
@@ -89,7 +94,6 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
                 options = ("Seleccionar una opcion:\n"
                             "1. Listar Recitales Guardados\n"
                             "2. Buscar en paginas\n"
-                            # "3. Editar Configuraciones de Usuario\n"
                             "3. Agregar a Favoritos\n"
                             "4. Eliminar de Favoritos\n"
                             "5. Actualizar recitales\n"
@@ -99,18 +103,23 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
                 while server_running.is_set():
                     user_input = client_socket.recv(1024).strip().decode('utf-8')
                     if user_input.lower() == 'exit':
+                        user_input_option_exit = f"Saliendo del process"
+                        common_utils.log_queue.put(user_input_option_exit)
                         break
                     if user_input == '1':
+                        common_utils.log_queue.put(f"Cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}) opcion listar_recitales.")
                         self.list_recitals(client_socket, options, user.id)
                     elif user_input == '2':
+                        common_utils.log_queue.put(f"Cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}) opcion buscar_recitales.")
                         self.search_recitals(client_socket, options)
                     elif user_input == '3':
-                        self.edit_configurations(client_socket, options)
-                    elif user_input == '4':
+                        common_utils.log_queue.put(f"Cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}) opcion agregar_favoritos.")
                         self.add_to_favs(client_socket, options, user.id)
-                    elif user_input == '5':
+                    elif user_input == '4':
+                        common_utils.log_queue.put(f"Cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}) opcion eliminar_favorito.")
                         self.remove_from_favs(client_socket, options, user.id)
-                    elif user_input == '6':
+                    elif user_input == '5':
+                        common_utils.log_queue.put(f"Cliente {threading.current_thread().name} (ID: {threading.current_thread().ident}) opcion actualizar_recitales.")
                         self.trigger_scraper_process(client_socket, options)
                     else:
                         client_socket.sendall("Comando no reconocido. Tratar nuevamente.".encode('utf-8'))
@@ -210,16 +219,6 @@ class CommandLineHandler(socketserver.BaseRequestHandler):
             print(f"Error searching recitals: {e}")
             client_socket.sendall("Error searching recitals.\n".encode('utf-8'))
             client_socket.sendall(options.encode('utf-8'))
-
-
-    # def edit_configurations(self, client_socket, options):
-    #     try:
-    #         client_socket.sendall("Edit configurations feature is not yet implemented.\n".encode('utf-8'))
-    #         client_socket.sendall(options.encode('utf-8'))
-    #     except Exception as e:
-    #         print(f"Error editing configurations: {e}")
-    #         client_socket.sendall("Error editing configurations.\n".encode('utf-8'))
-    #         client_socket.sendall(options.encode('utf-8'))
 
 
     def trigger_scraper_process(self, client_socket, options):

@@ -1,10 +1,11 @@
 import argparse
 import getpass
+import os
 import select
 import signal
 import socket
 import sys
-import os
+import threading
 
 
 class Client:
@@ -25,6 +26,7 @@ class Client:
         os._exit(0)
 
     def receive_message(self):
+        print(f"Thread ID in receive_message: {threading.get_ident()}")  # Print thread ID
         try:
             response = self.client_socket.recv(2048).decode('utf-8')
             if response:
@@ -45,6 +47,7 @@ class Client:
             self.client_running = False
 
     def send_command_to_server(self, command):
+        print(f"Thread ID in send_command_to_server: {threading.get_ident()}")  # Print thread ID
         try:
             self.client_socket.sendall(command.encode('utf-8'))
 
@@ -57,6 +60,7 @@ class Client:
             print(f"Error communicating with the server: {e}")
 
     def connect(self):
+        print(f"Thread ID in connect: {threading.get_ident()}")  # Print thread ID
         try:
             self.client_socket.connect((self.server_address, self.server_port))
             print("Conectado al servidor.")
@@ -106,4 +110,5 @@ def main():
         client.client_socket.close()
 
 if __name__ == "__main__":
+    print(f"Thread ID in main: {threading.get_ident()}")  # Print thread ID
     main()

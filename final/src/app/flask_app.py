@@ -38,12 +38,14 @@ def load_user(user_id):
 @flask_app.route('/')
 @login_required
 def index():
+    common_utils.create_http_log(request)
     return render_template('home.html')
 
 
 @flask_app.route('/home')
 @login_required
 def home():
+    common_utils.create_http_log(request)
     return render_template('home.html', username='diego')
 
 
@@ -55,18 +57,14 @@ def profile():
 
 @flask_app.route("/logout")
 def logout():
+    common_utils.create_http_log(request)
     logout_user()
     return redirect(url_for('home'))
 
 
 @flask_app.route('/login', methods=['GET', 'POST'])
 def login():
-    http_method = request.method
-    path = request.path
-    protocol = request.environ.get('SERVER_PROTOCOL')
-    log_message = f"Received HTTP request from {request.remote_addr}: {http_method} {path} {protocol}"
-    common_utils.log_queue.put(log_message)
-
+    common_utils.create_http_log(request)
     form = LoginForm()
     if form.validate_on_submit():
         identifier = form.identifier.data
@@ -84,6 +82,7 @@ def login():
 
 @flask_app.route('/register', methods=['GET', 'POST'])
 def register():
+    common_utils.create_http_log(request)
     form = SignupForm()
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -100,6 +99,7 @@ def register():
 @flask_app.route('/search', methods=['POST'])
 @login_required
 def search():
+    common_utils.create_http_log(request)
     form = SearchForm()
     if form.validate_on_submit():
         search_term = form.search.data
@@ -110,6 +110,7 @@ def search():
 @flask_app.route('/recitals')
 @login_required
 def recitals():
+    common_utils.create_http_log(request)
     form = SearchForm()
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -126,6 +127,7 @@ def recitals():
 @flask_app.route('/add_favorite/<int:recital_id>', methods=['POST'])
 @login_required
 def add_favorite(recital_id):
+    common_utils.create_http_log(request)
     services.add_favorite(current_user.id, recital_id)
     flash('Recital added to favorites.')
     return redirect(url_for('recitals'))
@@ -134,6 +136,7 @@ def add_favorite(recital_id):
 @flask_app.route('/remove_favorite/<int:recital_id>', methods=['POST'])
 @login_required
 def remove_favorite(recital_id):
+    common_utils.create_http_log(request)
     services.remove_favorite(current_user.id, recital_id)
     flash('Recital removed from favorites.')
     return redirect(url_for('recitals'))
@@ -142,6 +145,7 @@ def remove_favorite(recital_id):
 @flask_app.route('/update', methods=['POST', 'GET'])
 @login_required
 def update_recitals():
+    common_utils.create_http_log(request)
     services.update_recitals()
     flash('Proceso de Actualizacion de recitales finalizado.')
     return redirect(url_for('recitals'))

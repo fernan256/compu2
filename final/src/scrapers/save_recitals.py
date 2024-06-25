@@ -7,6 +7,7 @@ from datetime import datetime
 from app.flask_app import flask_app
 from app.models import Recitals
 from app.services import services
+from utils import common_utils
 from .scraper_indihoy import scrap_indihoy
 from .scraper_livepass import scrap_livepass
 from .scraper_songkick import scrap_songkick
@@ -95,7 +96,11 @@ class ScraperManager:
 
     def run(self):
         print(f"Running scrapers at {datetime.now()}")
+        common_utils.log_queue.put(f"Running scrapers at {datetime.now()}")
         print(f"Total active threads before scraping: {threading.active_count()}")
+        common_utils.log_queue.put(f"Total active threads before scraping: {threading.active_count()}")
         self.trigger_scrapers()
         print(f"Scraping completed. Duplicates found: {self.duplicate_count}")
+        common_utils.log_queue.put(f"Scraping completed. Duplicates found: {self.duplicate_count}")
         print(f"Events saved to database: {self.saved_count}")
+        common_utils.log_queue.put(f"Events saved to database: {self.saved_count}")

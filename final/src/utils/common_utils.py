@@ -17,6 +17,7 @@ def log_writer(log_file, server_running):
         except queue.Empty:
             pass
 
+
 def get_table_rows(recitals):
     table_header = "Id | Artista | Fecha | Lugar | Link\n"
     table_rows = []
@@ -27,3 +28,11 @@ def get_table_rows(recitals):
 
     table = table_header + ''.join(table_rows)
     return table
+
+
+def create_http_log(request):
+    http_method = request.method
+    path = request.path
+    protocol = request.environ.get('SERVER_PROTOCOL')
+    log_message = f"Received HTTP request from {request.remote_addr}: {http_method} {path} {protocol}"
+    log_queue.put(log_message)
