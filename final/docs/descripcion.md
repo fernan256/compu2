@@ -26,13 +26,13 @@ Luego de un analisis entre ambas herramientas, para concurrencia, me decidi hilo
 
 ### Elementos que se usaran
 
-Hilos para multiples conexiones de clientes de manera concurrente.
-Mecanismos de IPC como queues.
-Parseo de argumentos por linea de comandos.
-Uso de contenedores para la aplicacion como para la base de datos.
-Base de datos.
-Interfaz de usuario.
-Observabilidad.
+* Hilos para multiples conexiones de clientes de manera concurrente.
+* Mecanismos de IPC como queues.
+* Parseo de argumentos por linea de comandos.
+* Uso de contenedores para la aplicacion como para la base de datos.
+* Base de datos.
+* Interfaz de usuario.
+* Observabilidad.
 
 ### Diagramas
 

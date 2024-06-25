@@ -24,22 +24,26 @@ Editar el archivo /etc/docker/daemon.json, en caso de que no exista crearlo con 
 mkdir /etc/docker && touch /etc/docker/daemon.json
 vim /etc/docker/daemon.json
 ```
-#### Agregar las siguientes lineas
+
+Agregar las siguientes lineas
 ```
 {
   "experimental": true,
   "ip6tables": true
 }
 ```
-#### Guardar el archivo y reiniciar el servicio de docker
+
+Guardar el archivo y reiniciar el servicio de docker
 ```
 sudo systemctl restart docker
 ```
-#### Crear una nueva red IPV6 usando los siguientes comandos:
+
+Crear una nueva red IPV6 usando los siguientes comandos:
 ```
 docker network create --ipv6 --subnet 2001:0DB8::/112 ip6net
 ```
-#### Agregar el siguiente codigo a docker compose
+
+Agregar el siguiente codigo a docker compose
 ```
 networks:
   ip6net:
@@ -48,13 +52,13 @@ networks:
        config:
          - subnet: 2001:0DB8::/112
 ```
-#### Agregar la nueva red a nuestra aplicacion python
+Agregar la nueva red a nuestra aplicacion python
 
 ## Ejecucion de aplicacion y cliente
 
 ### Iniciar los contenedores con la aplicacion, base de datos, prometheus y grafana
 
-#### En una terminal ejecutar el siguiente comando:
+En una terminal ejecutar el siguiente comando:
 
 ```
 clear && docker compose build \
@@ -69,7 +73,8 @@ clear && docker compose build \
 ```
 
 ### Inicializar la base de datos
-#### Conectarse al contenedor de python en modo bash y ejecutar
+
+Conectarse al contenedor de python en modo bash y ejecutar
 
 ```
 docker exec -it final-python-1 bash
@@ -77,29 +82,67 @@ docker exec -it final-python-1 bash
 python -m init_db.py 
 ```
 
-#### Al cual se le pueden pasar los siguientes comands:
-##### HOST_IPV4
-##### HTTP_PORT_IPV4
-##### COMMAND_LINE_PORT_IPV4
-##### HOST_IPV6
-##### HTTP_PORT_IPV6
-##### COMMAND_LINE_PORT_IPV6
-##### LOG_FILE=output.log
+Al cual se le pueden pasar los siguientes comands:
+* HOST_IPV4
+* HTTP_PORT_IPV4
+* COMMAND_LINE_PORT_IPV4
+* HOST_IPV6
+* HTTP_PORT_IPV6
+* COMMAND_LINE_PORT_IPV6
+* LOG_FILE=output.log
 
-### Ejecutar cliente
+### Ejecutar clientes
 
-#### Para el cliente de linea de comandos podemos correr los siguientes comandos:
+Para el cliente de linea de comandos podemos correr los siguientes comandos:
 
-
-##### Para IPV4
+##### Cliente CMD IPV4
 ```
 clear && python src/client.py ipv4 172.22.0.5 9092
 ```
 
-##### Para IPV6
+##### Cliente web
+
+IPv4: http://localhost:8082
+
+
+##### Cliente CMD IPV6
+
 ```
 clear && python src/client.py ipv6 2001:db8::2 9093
 ```
+
+##### Cliente web
+
+Para acceder al pagina web debemos obtener la ip del contenedor que esta corriendo nuestra aplicacion, para ello usaremos el siguiente comando
+
+```
+docker inspect final-python-1
+```
+
+Y buscaremos el apartado de nextworking algo como lo siguiente:
+
+```
+"Networks": {
+  "final_ip6net": {
+      ...
+      "IPv6Gateway": "2001:db8::1",
+      "GlobalIPv6Address": "2001:db8::2",
+      "GlobalIPv6PrefixLen": 112,
+      "DriverOpts": null,
+      "DNSNames": [
+          "final-python-1",
+          "python",
+          "246a714092bc"
+      ]
+    },
+  },
+
+```
+
+De donde podremos obtener tanto la ip para IPv6
+
+IPv6: http://[2001:db8::2]:8083
+
 
 ## Para correr el scraper en forma local
 
@@ -113,11 +156,28 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 clear && python scrapers/save_recitals.py
 ```
 
+## Observabilidad
+
+### Prometheus
+
+Para acceder a las configuraciones de Prometheus usaremos la siguiente direccion
+
+http://localhost:9090
+
+### Grafana
+
+Para acceder a Grafana usaremos la siguiente direccion
+
+http://localhost:3000
+
 
 ## Comandos utiles
 
 ```
 docker inspect -f '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' final-python-1
+docker exec -it final-python-1 bash
+ps -eLf | grep "python"
+docker inspect <contenedor>
 ```
 
 ## Links utiles

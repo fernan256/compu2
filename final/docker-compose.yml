@@ -24,6 +24,8 @@ services:
     ports:
       - "8082:8082"
       - "9092:9092"
+      - "8083:8083"
+      - "9093:9093"
     networks:
       - main-network
       - ip6net
