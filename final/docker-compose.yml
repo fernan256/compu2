@@ -10,7 +10,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - main-network
+      - main_network
 
   python:
     build:
@@ -27,7 +27,7 @@ services:
       - "8083:8083"
       - "9093:9093"
     networks:
-      - main-network
+      - main_network
       - ip6net
     links:
       - db:mysql_db
@@ -41,7 +41,7 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - main-network
+      - main_network
 
   grafana:
     image: grafana/grafana
@@ -50,14 +50,14 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
-      - main-network
+      - main_network
           
 
 volumes:
   mysql_data:
 
 networks:
-  main-network:
+  main_network:
     driver: bridge
   ip6net:
      enable_ipv6: true

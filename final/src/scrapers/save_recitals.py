@@ -4,7 +4,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from app.flask_app import flask_app
+import app.flask_app
 from app.models import Recitals
 from app.services import services
 from utils import common_utils
@@ -40,7 +40,7 @@ class ScraperManager:
 
 
     def is_duplicate_and_save_to_database(self, result):
-        with flask_app.app_context():
+        with app.flask_app.app_context():
             for event in result:
                 date_to_save = event['date']
                 if date_to_save != 'Date not available':
@@ -65,7 +65,7 @@ class ScraperManager:
 
 
     def save_to_database(self, data):
-        with flask_app.app_context():
+        with app.flask_app.app_context():
             date_to_save = data['date']
             if date_to_save != 'Date not available':
                 event_date = data['date']
