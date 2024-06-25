@@ -88,7 +88,6 @@ def register():
         if form.validate_on_submit():
             hashed_password = generate_password_hash(form.password.data, method='pbkdf2:sha256', salt_length=8)
             new_user = Users(username=form.username.data, email=form.email.data, password=hashed_password)
-            print(f"new_user: {new_user}")
             db.session.add(new_user)
             db.session.commit()
             flash('You have successfully signed up!')

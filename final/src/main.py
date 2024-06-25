@@ -10,7 +10,7 @@ import threading
 from prometheus_client import start_http_server, Summary, Counter, Gauge
 from socket_server import server_running, client_sockets, CommandLineHandler
 
-from app.flask_app import flask_app
+from app import flask_app
 from utils import common_utils
 
 

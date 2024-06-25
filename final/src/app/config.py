@@ -1,16 +1,17 @@
 import os
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 from dotenv import load_dotenv
 
-dotenv_path = join(dirname(__file__), '.env')
-print(f"dotenv_path {dotenv_path}")
+current_dir = dirname(__file__)
+parent_dir = abspath(join(current_dir, '..'))
+dotenv_path = join(parent_dir, '.env')
+
 load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
     DB_USERNAME = os.getenv('DB_USERNAME')
     DB_PASSWORD = os.getenv('DB_PASSWORD')
-    # DB_HOST = os.getenv('DB_HOST')
     DB_PORT = os.getenv('DB_PORT')
     DB_NAME = os.getenv('DB_NAME')
 
@@ -21,3 +22,7 @@ class Config:
     @staticmethod
     def get_sqlalchemy_uri():
         return Config.SQLALCHEMY_DATABASE_URI
+
+    @staticmethod
+    def get_sqlalchemy_uri_without_db():
+        return f"mysql+pymysql://{Config.DB_USERNAME}:{Config.DB_PASSWORD}@mysql_db:{Config.DB_PORT}/"
