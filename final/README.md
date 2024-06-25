@@ -269,4 +269,4 @@ Here is the solution https://medium.com/@kiena/troubleshooting-dbeaver-public-ke
 
 Go to the “Driver Properties” section. Locate the property named “allowPublicKeyRetrieval”. By default, it is set to “false”. Change the value of “allowPublicKeyRetrieval” to “TRUE”.
 
-Imagen
+![Dbeaver](https://github.com/fernan256/compu2/blob/main/final/docs/2024-06-25_16-58.png)
